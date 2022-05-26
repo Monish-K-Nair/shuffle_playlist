@@ -1,0 +1,36 @@
+version: "3"
+
+networks:
+  backend:
+
+services:
+
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - "backend"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    depends_on:
+      - db
+    build:
+      context: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./app:/app
+    networks:
+      - "backend"
+    command: >
+      sh -c "python manage.py migrate && python manage.py create_admin && python manage.py runserver 0.0.0.0:4000"
